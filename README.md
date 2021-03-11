@@ -21,7 +21,7 @@ If the character exists, all occurences of that character will be revealed to th
 Game will end when either players used up all their chances or all the letters are revealed <br>
 
 ## Game Commands:
-**!hint**: Show hint (if provided) of the secret word
-**!forfeit**: Give up 
-**!answer**: Submit answer before all letters are revealed
+**!hint**: Show hint (if provided) of the secret word <br>
+**!forfeit**: Give up <br>
+**!answer**: Submit answer before all letters are revealed <br>
 
