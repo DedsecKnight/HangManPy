@@ -56,15 +56,18 @@ class HangMan:
     def show_hint(self):
         print(f"Hint: {self.hint}")
 
+    # Print 'Invalid input' message
     def invalid_input(self):
         print('Invalid input. Please try again')
     
+    # Submit final answer
     def submit_answer(self, answer):
         if (answer == self.word_list[self.word_idx][0]):
             self.remain_letter = 0
         else:
             self.chances = 0
     
+    # Prompt for action confirmation
     def confirm_action(self):
         while (True):
             prompt = input('Are you sure you want to do this action? This action is irreversible. (Y/N) ')
@@ -77,6 +80,7 @@ class HangMan:
             
             self.invalid_input()
 
+    # Process user's request to submit final answer
     def get_final_answer(self):
         while (True):
             final_answer = input('Enter your final answer: ')
@@ -84,6 +88,7 @@ class HangMan:
                 self.submit_answer(final_answer)
                 return
     
+    # Process give up request
     def forfeit(self):
         if (self.confirm_action()): self.chances = 0
 
@@ -99,6 +104,7 @@ class HangMan:
         else:
             self.invalid_input()
     
+    # Check if input is a valid character
     def valid_character(self, guess_input):
         if (len(guess_input) != 1): return False
         return ord(guess_input) in range(65, 91) or ord(guess_input) in range(97, 123)
