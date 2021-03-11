@@ -2,6 +2,14 @@ from random import randint
 from sys import stdout
 
 class HangMan:
+
+    GUESS_FLAG = "GUESS_FLAG"
+    REQUEST_FLAG = "REQUEST_FLAG"
+
+    HINT_COMMAND = "hint"
+    ANSWER_COMMAND = "answer"
+    FORFEIT_COMMAND = "forfeit"
+
     def __init__(self, filename):
         # Generate dictionary
         f = open(filename, 'r')
@@ -17,9 +25,11 @@ class HangMan:
     # Choose a random word
     def choose_word(self):
         self.word_idx = randint(0, len(self.word_list)-1)
+        
         word, hint = self.word_list[self.word_idx]
         self.remain_letter = len(word)
         if (hint): self.hint = hint
+
         for (i,c) in enumerate(word):
             character_ascii = ord(c.lower()) - 97
             self.character_list[character_ascii].append(i+1)
@@ -38,28 +48,82 @@ class HangMan:
     # Show guessed characters and remaining lives
     def show_status(self):
         print(f"{self.remain_letter} more letters to reveal the secret word. You have {self.chances} chance(s) remaining. ")
-        print(f"Hint: {self.hint}")
         for dot in self.word_status: 
             stdout.write(dot + " ")
         stdout.write('\n\n')
+
+    # Show hint
+    def show_hint(self):
+        print(f"Hint: {self.hint}")
+
+    def invalid_input(self):
+        print('Invalid input. Please try again')
     
+    def submit_answer(self, answer):
+        if (answer == self.word_list[self.word_idx][0]):
+            self.remain_letter = 0
+        else:
+            self.chances = 0
+    
+    def confirm_action(self):
+        while (True):
+            prompt = input('Are you sure you want to do this action? This action is irreversible. (Y/N) ')
+            
+            if (prompt.lower() == 'y'):
+                return True
+            
+            if (prompt.lower() == 'n'): 
+                return False
+            
+            self.invalid_input()
+
+    def get_final_answer(self):
+        while (True):
+            final_answer = input('Enter your final answer: ')
+            if (self.confirm_action()):
+                self.submit_answer(final_answer)
+                return
+    
+    def forfeit(self):
+        if (self.confirm_action()): self.chances = 0
+
+    # Process request command from user
+    def process_request(self, request):
+        if (request == self.HINT_COMMAND):
+            self.show_hint()
+        elif (request == self.ANSWER_COMMAND):
+            if (self.confirm_action()):
+                self.get_final_answer()
+        elif (request == self.FORFEIT_COMMAND):
+            self.forfeit()
+        else:
+            self.invalid_input()
+    
+    def valid_character(self, guess_input):
+        if (len(guess_input) != 1): return False
+        return ord(guess_input) in range(65, 91) or ord(guess_input) in range(97, 123)
+
     # Get character input from player
     def get_character(self):
         guess_input = ''
         while (True):
             guess_input = input('Enter your guess: ')
-            if (len(guess_input) != 1):
-                print("You entered more or less than 1 character. Please try again\n")
+            
+            if (guess_input[0] == '!'):
+                return (self.REQUEST_FLAG, guess_input[1:])
+            
+            if (not self.valid_character(guess_input)):
+                self.invalid_input()
                 continue
-            if (ord(guess_input) not in range(65, 91) and ord(guess_input) not in range(97, 123)):
-                print("You entered an invalid character. Please try again\n")
-                continue
+            
             guess_input = guess_input.lower()
             guess_ascii = ord(guess_input) - 97
+            
             if (self.guessed[guess_ascii]):
                 print('You have already guessed this character. Please try again\n')
                 continue
-            return (guess_input.lower(), ord(guess_input.lower()) - 97)
+            
+            return (self.GUESS_FLAG, guess_input.lower())
 
     # If given character does not exist in the secret word
     def wrong_answer(self):
@@ -83,7 +147,7 @@ class HangMan:
         if (not self.remain_letter):
             print(f"\nCongratulation! You have found the word. The word is {self.word_list[self.word_idx][0]}")
         else:
-            print(f"\nYou lose. The answer is {self.word_list[self.word_idx]}")
+            print(f"\nYou lose. The answer is {self.word_list[self.word_idx][0]}")
 
         self.play_again()
     
@@ -93,7 +157,7 @@ class HangMan:
         while (True):
             prompt_new_game = input('Do you want to play again? ')
             if (prompt_new_game.lower() == 'y' or prompt_new_game.lower() == 'n'): break
-            print('Invalid input. Please try again')
+            self.invalid_input()
         
         if (prompt_new_game.lower() == 'n'): 
             exit(0)
@@ -107,13 +171,19 @@ class HangMan:
 
         while (self.chances and self.remain_letter):
             self.show_status()
-            current_guess, current_ascii = self.get_character()
-            if (not self.character_list[current_ascii]): 
-                self.wrong_answer()
-            else: 
-                self.correct_answer(current_character=current_guess, current_ascii=current_ascii)
-            
-            self.guessed[current_ascii] = True
+
+            flag, data = self.get_character()
+
+            if (flag == self.GUESS_FLAG):
+                current_ascii = ord(data) - 97
+                if (not self.character_list[current_ascii]): 
+                    self.wrong_answer()
+                else: 
+                    self.correct_answer(current_character=data, current_ascii=current_ascii)
+                self.guessed[current_ascii] = True
+            else:
+                self.process_request(data)
+                
         
         self.game_result()
 
